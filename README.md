@@ -1,6 +1,6 @@
-# Vencord
+# Manticord
 
-A Discord client mod that does things differently
+A Discord client mod that does things differently, made my bantikafasi (not ven)
 
 ## Features
 
