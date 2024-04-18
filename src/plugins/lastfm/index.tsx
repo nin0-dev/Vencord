@@ -160,11 +160,6 @@ const settings = definePluginSettings({
         type: OptionType.BOOLEAN,
         default: false,
     },
-    showElapsedTime: {
-        description: "Show elapsed time since play",
-        type: OptionType.BOOLEAN,
-        default: true,
-    },
     useListeningStatus: {
         description: 'Show "Listening to" status instead of "Playing"',
         type: OptionType.BOOLEAN,
