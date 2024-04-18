@@ -101,25 +101,30 @@ function setActivity(activity: Activity | null) {
 
 const settings = definePluginSettings({
     username: {
-        description: "last.fm username",
+        description: "Last.fm username (required)",
         type: OptionType.STRING,
     },
     apiKey: {
-        description: "last.fm api key",
+        description: "Last.fm API key (required)",
         type: OptionType.STRING,
     },
+    shareSongLink: {
+        description: "Show link to currently playing song",
+        type: OptionType.BOOLEAN,
+        default: true,
+    },
     shareUsername: {
-        description: "show link to last.fm profile",
+        description: "Show link to Last.fm profile",
         type: OptionType.BOOLEAN,
         default: false,
     },
     hideWithSpotify: {
-        description: "hide last.fm presence if spotify is running",
+        description: "Hide Last.fm presence if Spotify is running",
         type: OptionType.BOOLEAN,
         default: true,
     },
     statusName: {
-        description: "custom status text",
+        description: "Custom status text (you can use {song} and {artist} placeholders",
         type: OptionType.STRING,
         default: "some music",
     },
@@ -150,8 +155,18 @@ const settings = definePluginSettings({
             }
         ],
     },
+    showByOnPrefixes: {
+        description: "Show by/on prefixes on artist/album names",
+        type: OptionType.BOOLEAN,
+        default: false,
+    },
+    showElapsedTime: {
+        description: "Show elapsed time since play",
+        type: OptionType.BOOLEAN,
+        default: true,
+    },
     useListeningStatus: {
-        description: 'show "Listening to" status instead of "Playing"',
+        description: 'Show "Listening to" status instead of "Playing"',
         type: OptionType.BOOLEAN,
         default: false,
     },
@@ -171,7 +186,12 @@ const settings = definePluginSettings({
         ],
     },
     showLastFmLogo: {
-        description: "show the Last.fm logo by the album cover",
+        description: "Show the Last.fm logo by the album cover",
+        type: OptionType.BOOLEAN,
+        default: true,
+    },
+    showShareCommands: {
+        description: "Show share commands (song, album, artist)",
         type: OptionType.BOOLEAN,
         default: true,
     }
@@ -280,22 +300,23 @@ export default definePlugin({
         const assets: ActivityAssets = largeImage ?
             {
                 large_image: await getApplicationAsset(largeImage),
-                large_text: trackData.album || undefined,
+                large_text: settings.store.showByOnPrefixes ? `on ${trackData.album}` : trackData.album || undefined,
                 ...(settings.store.showLastFmLogo && {
                     small_image: await getApplicationAsset("lastfm-small"),
                     small_text: "Last.fm"
                 }),
             } : {
                 large_image: await getApplicationAsset("lastfm-large"),
-                large_text: trackData.album || undefined,
+                large_text: settings.store.showByOnPrefixes ? `on ${trackData.album}` : trackData.album || undefined,
             };
 
-        const buttons: ActivityButton[] = [
-            {
+        const buttons: ActivityButton[] = [];
+
+        if (settings.store.shareSongLink)
+            buttons.push({
                 label: "View Song",
                 url: trackData.url,
-            },
-        ];
+            });
 
         if (settings.store.shareUsername)
             buttons.push({
@@ -314,7 +335,7 @@ export default definePlugin({
                 case NameFormat.SongOnly:
                     return trackData.name;
                 default:
-                    return settings.store.statusName;
+                    return settings.store.statusName.replaceAll("{artist}", trackData.artist).replaceAll("{song}", trackData.name);
             }
         })();
 
@@ -323,7 +344,7 @@ export default definePlugin({
             name: statusName,
 
             details: trackData.name,
-            state: trackData.artist,
+            state: settings.store.showByOnPrefixes ? `by ${trackData.artist}` : trackData.artist,
             assets,
 
             buttons: buttons.map(v => v.label),
